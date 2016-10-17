@@ -20,22 +20,47 @@ char dist[3];
 char rot[3];
 int rotation = 0;
 String output = "";
-                                                                                  
+int max_dist = 0;
+int max_dist_dig = 90;
+int distance = 0;
+                                                                                    
 void setup() {
   pinMode(LEFT_FORWARD, OUTPUT);
   pinMode(RIGHT_FORWARD, OUTPUT);
   pinMode (TRIG_PIN, OUTPUT);
   pinMode (ECHO_PIN, INPUT);
-  myServo.attach(10);  // attaches the servo on pin 9 to the servo object 
+  myServo.attach(10);  // attaches the servo on pin 10 to the servo object 
   myServo.write(90);
   Serial.begin(115200);
   Serial.println("===== Ultrasonic rotating sonar =====");
 }
+void turnRight(){
+  digitalWrite(LEFT_FORWARD,LOW);
+  digitalWrite(RIGHT_FORWARD,HIGH);
+  digitalWrite(LEFT_BACKWARD,HIGH);
+  digitalWrite(RIGHT_BACKWARD,LOW);
+}
+void turnLeft(){
+  digitalWrite(LEFT_FORWARD,HIGH);
+  digitalWrite(RIGHT_FORWARD,LOW);
+  digitalWrite(LEFT_BACKWARD,LOW);
+  digitalWrite(RIGHT_BACKWARD,HIGH);
+}
 void moveFoward(){
+  myServo.write(90);
   digitalWrite(LEFT_FORWARD,HIGH);
   digitalWrite(RIGHT_FORWARD,HIGH);
   digitalWrite(LEFT_BACKWARD,LOW);
   digitalWrite(RIGHT_BACKWARD,LOW);
+  while(1){
+    delay(30);
+    distance = getSonar();
+    debugDist(distance);
+    if (distance < 10){
+        stopMotor();
+        break;
+    }
+  }
 }
 void stopMotor(){
   digitalWrite(LEFT_FORWARD,LOW);
@@ -43,45 +68,96 @@ void stopMotor(){
   digitalWrite(LEFT_BACKWARD,LOW);
   digitalWrite(RIGHT_BACKWARD,LOW);
 }
-void moveBackward(){
+void moveBackward(int d){
   digitalWrite(LEFT_FORWARD,LOW);
   digitalWrite(RIGHT_FORWARD,LOW);
   digitalWrite(LEFT_BACKWARD,HIGH);
   digitalWrite(RIGHT_BACKWARD,HIGH);
-}
-void loop() { 
-  // scan right to left
-  moveFoward();
-  for (int deg = 90; deg < 170; deg+=5) {
-    myServo.write(deg);
-    delay(300);
-    displaySonar(deg);
-  }
-  moveBackward();
-  // scan left to right
-  for (int deg = 90; deg > 10; deg-=5) {
-    myServo.write(deg);
-    delay(300);
-    displaySonar(deg);
+  while(1){
+    delay(30);
+    distance = getSonar();
+    if (distance > d){
+        stopMotor();
+        debugDist(distance);
+        break;
+    }
   }
 }
-void displaySonar(int degrees) {
-  int distance = sonar.ping_cm(); 
+void searchLeft(){
+  // scan center to left
+  for (int deg = 10; deg < 90; deg+=5) {
+    myServo.write(deg);
+    delay(100);
+    distance = getSonar();
+    debugDist(distance);
+    debugDig(deg);
+    if (max_dist < distance){
+      max_dist = distance;
+      max_dist_dig = deg;
+    }
+  }
+}
+void searchRight(){
+  // scan center to right
+  for (int deg = 170; deg > 90; deg-=5) {
+    myServo.write(deg);
+    delay(100);
+    distance = getSonar(); 
+    debugDist(distance);
+    debugDig(deg);       
+    if (max_dist < distance){
+      max_dist = distance;
+      max_dist_dig = deg;
+    }
+  }
+}
+int getSonar() {
+  distance = sonar.ping_cm();
   delay(30);
   if (distance < 10){
     distance = 0; 
-    stopMotor();
-  }  
-  sprintf(dist,"%3d",distance);
+  }
+  return distance;
+}
+void debugDist(int d){
+  sprintf(dist,"%3d",d);
   Serial.print("Range:");
   Serial.print(dist);
   Serial.print("cms/");
-  sprintf(rot,"%3d",degrees);
-  Serial.print(rot);
-  Serial.print("deg:");
-
-  for (int dloop = 0; dloop < distance/4; dloop++) {
-    Serial.print("-");
-  }
-  Serial.println("=");
 }
+void debugDig(int d){
+  sprintf(rot,"%3d",d);
+  Serial.print(rot);
+  Serial.print("deg/");
+}
+
+void loop() { 
+  distance = getSonar();
+  debugDist(distance);    
+  if (distance < 10){
+    Serial.print("moveBackward:");
+    moveBackward(50);
+  } else {
+    max_dist = 0;
+    searchLeft();
+    searchRight();    
+    debugDist(max_dist);  
+    debugDig(max_dist_dig);  
+    delay(30);
+    if(max_dist_dig>90){
+      Serial.print("turnRight:");
+      turnRight();
+      delay((max_dist_dig-90)*5);
+      stopMotor();
+    }else{
+      Serial.print("turnLeft:");
+      turnLeft();
+      delay((90-max_dist_dig)*5);
+      stopMotor();
+    }
+    Serial.print("moveFoward:");
+    moveFoward();
+  } 
+  delay(3000);
+}
+

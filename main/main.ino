@@ -56,7 +56,7 @@ void moveFoward(){
     delay(30);
     distance = getSonar();
     debugDist(distance);
-    if (distance < 10){
+    if (distance < 20){
         stopMotor();
         break;
     }
@@ -87,7 +87,7 @@ void searchLeft(){
   // scan center to left
   for (int deg = 10; deg < 90; deg+=5) {
     myServo.write(deg);
-    delay(100);
+    delay(50);
     distance = getSonar();
     debugDist(distance);
     debugDig(deg);
@@ -101,7 +101,7 @@ void searchRight(){
   // scan center to right
   for (int deg = 170; deg > 90; deg-=5) {
     myServo.write(deg);
-    delay(100);
+    delay(50);
     distance = getSonar(); 
     debugDist(distance);
     debugDig(deg);       
@@ -113,7 +113,7 @@ void searchRight(){
 }
 int getSonar() {
   distance = sonar.ping_cm();
-  delay(30);
+  delay(25);
   if (distance < 10){
     distance = 0; 
   }
@@ -143,16 +143,24 @@ void loop() {
     searchRight();    
     debugDist(max_dist);  
     debugDig(max_dist_dig);  
-    delay(30);
-    if(max_dist_dig>90){
+    delay(25);
+    if(max_dist_dig>100){
       Serial.print("turnRight:");
       turnRight();
-      delay((max_dist_dig-90)*5);
+      if(max_dist<100){
+        delay((max_dist_dig-90)*20);
+      }else{
+        delay((max_dist_dig-90)*10);
+      }
       stopMotor();
-    }else{
+    }else if(max_dist_dig<80){
       Serial.print("turnLeft:");
       turnLeft();
-      delay((90-max_dist_dig)*5);
+      if(max_dist<100){
+        delay((90-max_dist_dig)*20);
+      }else{
+        delay((90-max_dist_dig)*10);
+      }
       stopMotor();
     }
     Serial.print("moveFoward:");

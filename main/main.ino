@@ -23,6 +23,9 @@ String output = "";
 int max_dist = 0;
 int max_dist_dig = 90;
 int distance = 0;
+int centerDistance = 0;
+int leftDistance = 0;
+int rightDistance = 0;
                                                                                     
 void setup() {
   pinMode(LEFT_FORWARD, OUTPUT);
@@ -46,19 +49,37 @@ void turnLeft(){
   digitalWrite(LEFT_BACKWARD,LOW);
   digitalWrite(RIGHT_BACKWARD,HIGH);
 }
-void moveFoward(){
-  myServo.write(90);
+void goOn(){
   digitalWrite(LEFT_FORWARD,HIGH);
   digitalWrite(RIGHT_FORWARD,HIGH);
   digitalWrite(LEFT_BACKWARD,LOW);
-  digitalWrite(RIGHT_BACKWARD,LOW);
+  digitalWrite(RIGHT_BACKWARD,LOW);  
+}
+void moveFoward(){
+  goOn();
   while(1){
-    delay(30);
-    distance = getSonar();
-    debugDist(distance);
-    if (distance < 20){
+    searchLeft(85);
+    delay(100);
+    leftDistance = getSonar();
+    searchRight(95); 
+    delay(100);
+    rightDistance = getSonar();
+    myServo.write(90);
+    delay(100);
+    centerDistance = getSonar();
+    if (centerDistance < 25){
         stopMotor();
         break;
+    }else if(leftDistance<50){
+        turnRight();
+        delay(100);
+        stopMotor();
+        goOn();
+    }else if(rightDistance<50){
+        turnLeft();
+        delay(100);
+        stopMotor();
+        goOn();
     }
   }
 }
@@ -83,9 +104,12 @@ void moveBackward(int d){
     }
   }
 }
-void searchLeft(){
+/*
+ * maxDeg 10 to 80
+ */
+void searchLeft(int maxDeg){
   // scan center to left
-  for (int deg = 10; deg < 90; deg+=5) {
+  for (int deg = maxDeg; deg < 90; deg+=5) {
     myServo.write(deg);
     delay(50);
     distance = getSonar();
@@ -97,9 +121,12 @@ void searchLeft(){
     }
   }
 }
-void searchRight(){
+/*
+ * 170 to 100
+ */
+void searchRight(int maxDeg){
   // scan center to right
-  for (int deg = 170; deg > 90; deg-=5) {
+  for (int deg = maxDeg; deg > 90; deg-=5) {
     myServo.write(deg);
     delay(50);
     distance = getSonar(); 
@@ -136,11 +163,11 @@ void loop() {
   debugDist(distance);    
   if (distance < 10){
     Serial.print("moveBackward:");
-    moveBackward(50);
+    moveBackward(30);
   } else {
     max_dist = 0;
-    searchLeft();
-    searchRight();    
+    searchLeft(10);
+    searchRight(170);    
     debugDist(max_dist);  
     debugDig(max_dist_dig);  
     delay(25);
@@ -166,6 +193,7 @@ void loop() {
     Serial.print("moveFoward:");
     moveFoward();
   } 
+  // wait 3 seconds
   delay(3000);
 }
 

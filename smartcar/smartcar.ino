@@ -265,9 +265,9 @@ void moveFoward(){
     myServo.write(90);
     delay(100);
     centerDistance = getSonar();
-    set_led_array(0,leftDistance);
+    set_led_array(80,leftDistance);
     set_led_array(90,centerDistance);
-    set_led_array(180,rightDistance);
+    set_led_array(100,rightDistance);
     write_led();
     if (centerDistance < 25){
         stopMotor();

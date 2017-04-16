@@ -1,3 +1,5 @@
+
+
 /* 
  * Project : Smart Car Project
  * Device  : Arduino + Shield V5 + L298N + Ultrasonic sencer + SG90 survo motor 
@@ -52,6 +54,8 @@ int rotation = 0;
 String output = "";
 int max_dist = 0;
 int max_dist_dig = 90;
+int min_dist = 0;
+int min_dist_dig = 90;
 int distance = 0;
 int centerDistance = 0;
 int leftDistance = 0;
@@ -216,7 +220,7 @@ void set_led_array(int deg,int dist){
  */
 void searchLeft(int maxDeg){
   // scan center to left
-  for (int deg = maxDeg; deg < 90; deg+=5) {
+  for (int deg = maxDeg; deg < 90; deg+=10) {
     myServo.write(deg);
     delay(25);
     distance = getSonar();
@@ -227,6 +231,10 @@ void searchLeft(int maxDeg){
       max_dist = distance;
       max_dist_dig = deg;
     }
+    if (min_dist > distance){
+      min_dist = distance;
+      min_dist_dig = deg;
+    }    
   }
 }
 /*
@@ -234,7 +242,7 @@ void searchLeft(int maxDeg){
  */
 void searchRight(int maxDeg){
   // scan center to right
-  for (int deg = maxDeg; deg > 90; deg-=5) {
+  for (int deg = maxDeg; deg > 90; deg-=10) {
     myServo.write(deg);
     delay(25);
     distance = getSonar(); 
@@ -245,6 +253,10 @@ void searchRight(int maxDeg){
       max_dist = distance;
       max_dist_dig = deg;
     }
+    if (min_dist > distance){
+      min_dist = distance;
+      min_dist_dig = deg;
+    }   
   }
 }
 void write_led(){
@@ -259,30 +271,32 @@ void moveFoward(){
     searchLeft(80);
     delay(100);
     leftDistance = getSonar();
-    searchRight(100); 
-    delay(100);
-    rightDistance = getSonar();
-    myServo.write(90);
-    delay(100);
-    centerDistance = getSonar();
     set_led_array(80,leftDistance);
-    set_led_array(90,centerDistance);
-    set_led_array(100,rightDistance);
-    write_led();
-    if (centerDistance < 25){
-        stopMotor();
-        break;
-    }else if(leftDistance<50){
+    if(leftDistance<50){
         turnRight();
         delay(200);
         stopMotor();
         goOn();
-    }else if(rightDistance<50){
+    }
+    searchRight(100); 
+    delay(100);
+    rightDistance = getSonar();
+    set_led_array(100,rightDistance);
+    if(rightDistance<50){
         turnLeft();
         delay(200);
         stopMotor();
         goOn();
     }
+    myServo.write(90);
+    delay(100);
+    centerDistance = getSonar();
+    if (centerDistance < 25){
+        stopMotor();
+        break;
+    }
+    set_led_array(90,centerDistance);
+    write_led(); 
   }
 }
 
@@ -294,20 +308,16 @@ void loop() {
     }
     delay(250);
   }
-  distance = getSonar();
-  //debugDist(distance);    
-  if (distance < 10){
-    //Serial.print("moveBackward:");
-    moveBackward(25);
-  } else {
     max_dist = 0;
     searchLeft(10);
     searchRight(170);    
     //debugDist(max_dist);  
     //debugDig(max_dist_dig);  
     write_led();
-    delay(25);
-    if(max_dist_dig>100){
+    if (min_dist<20){
+      //Serial.print("moveBackward:");
+      moveBackward(25);
+    }else if(max_dist_dig>100){
       // turnRight
       turnRight();
       if(max_dist<20){
@@ -328,6 +338,5 @@ void loop() {
     }
     // moveFoward
     moveFoward();
-  }
 }
 

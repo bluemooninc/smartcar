@@ -220,6 +220,8 @@ void set_led_array(int deg,int dist){
  */
 void searchLeft(int maxDeg){
   // scan center to left
+  min_dist = 300;
+  max_dist = 0;
   for (int deg = maxDeg; deg < 90; deg+=10) {
     myServo.write(deg);
     delay(25);
@@ -242,6 +244,8 @@ void searchLeft(int maxDeg){
  */
 void searchRight(int maxDeg){
   // scan center to right
+  min_dist = 300;
+  max_dist = 0;
   for (int deg = maxDeg; deg > 90; deg-=10) {
     myServo.write(deg);
     delay(25);
@@ -326,6 +330,8 @@ void loop() {
         delay((max_dist_dig-90)*10);
       }
       stopMotor();
+      // moveFoward
+      moveFoward();
     }else if(max_dist_dig<80){
       // turnLeft
       turnLeft();
@@ -335,8 +341,8 @@ void loop() {
         delay((90-max_dist_dig)*10);
       }
       stopMotor();
+      // moveFoward
+      moveFoward();
     }
-    // moveFoward
-    moveFoward();
 }
 

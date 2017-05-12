@@ -1,5 +1,4 @@
 
-
 /* 
  * Project : Smart Car Project
  * Device  : Arduino + Shield V5 + L298N + Ultrasonic sencer + SG90 survo motor 
@@ -8,6 +7,8 @@
 */
 #include <Servo.h> 
 #include <NewPing.h>
+#include <Wire.h>
+
 #define MAX_DISTANCE 300
 #define TRIG_PIN A0
 #define ECHO_PIN A1
@@ -15,6 +16,12 @@
 #define LEFT_BACKWARD 3
 #define RIGHT_FORWARD 4
 #define RIGHT_BACKWARD 5
+
+// For I2C wire
+int SLAVE_ADDRESS = 0x04;
+int wire_cmd = 0;
+int wire_val = 0;
+
 // For 8x8 Matrix LED
 int Max7219_pinCLK = 8;
 int Max7219_pinCS = 7;
@@ -96,6 +103,12 @@ void Init_MAX7219(void)
  * Set up LED and Sonor and Servo
  */
 void setup() {
+  // for I2C wire
+  Wire.begin(SLAVE_ADDRESS);
+  Wire.onReceive(receiveAnalogReading);
+  Wire.onRequest(sendData);
+  Serial.begin(9600);
+  Serial.println("Ready!!");
   // for LED
   delay(50);
   pinMode(Max7219_pinCLK,OUTPUT);
@@ -343,6 +356,40 @@ void loop() {
       stopMotor();
       // moveFoward
       moveFoward();
-    }
+    }    
 }
 
+void receiveAnalogReading(int byteCount){
+  while(Wire.available()){
+    wire_cmd = Wire.read();
+    Serial.print("data received: ");
+    Serial.println(wire_cmd);
+    
+    switch(wire_cmd){
+      case 0:
+        wire_val = analogRead(A0);
+        break;
+      case 1:
+        wire_val = analogRead(A1);
+        break;
+      case 2:
+        wire_val = analogRead(A2);
+        break;
+      case 3:
+        wire_val = analogRead(A3);
+        break;
+      case 4:
+        wire_val = analogRead(A4);
+        break;
+      case 5:
+        wire_val = analogRead(A5);
+        break; 
+    }
+  }
+}
+
+void sendData(){
+  Serial.print("send data: ");
+  Serial.println(wire_val / 10);
+  Wire.write(wire_val / 10);
+}

@@ -5,4 +5,4 @@ MAX7219 is LED matrix display sample.
 
 ![Wiring](/smartcar.jpg?raw=true "smartcar.jpg")
 
-![Build](/smartcar.pdf?raw=true "smartcar.pdf")
+![Build](/smartcar_build.jpg?raw=true "smartcar_build.jpg")
